@@ -74,18 +74,19 @@ RUN find /vss-agent/.venv -type f -path "*/torch/bin/test_*" -delete && \
 RUN rm -rf /vss-agent/.venv/lib/python3.13/site-packages/imageio_ffmpeg 2>/dev/null || true
 
 # Security patch stage - download patched OpenSSL libraries
-# CVE-2025-69419, CVE-2025-69420, CVE-2025-15467: Upgrade libssl3 to 3.0.19-1~deb12u1
+# CVE-2025-69419, CVE-2025-69420, CVE-2025-15467: Upgrade libssl3 from bookworm-security
 FROM debian:bookworm AS security-patches
 ARG TARGETARCH
 
 # Download the patched libssl3 package for the target architecture
+# Use debian-security pool (not debian/pool/main): stable-security versions move off the main mirror.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends wget ca-certificates && \
     mkdir -p /patches && \
     if [ "$TARGETARCH" = "amd64" ]; then \
-        wget -O /patches/libssl3.deb http://deb.debian.org/debian/pool/main/o/openssl/libssl3_3.0.19-1~deb12u1_amd64.deb; \
+        wget -O /patches/libssl3.deb http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl3_3.0.19-1~deb12u2_amd64.deb; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
-        wget -O /patches/libssl3.deb http://deb.debian.org/debian/pool/main/o/openssl/libssl3_3.0.19-1~deb12u1_arm64.deb; \
+        wget -O /patches/libssl3.deb http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl3_3.0.19-1~deb12u2_arm64.deb; \
     fi && \
     cd /patches && \
     dpkg-deb -x libssl3.deb /patches/libssl3-extracted && \
